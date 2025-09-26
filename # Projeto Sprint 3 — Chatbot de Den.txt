@@ -1,0 +1,83 @@
+# Projeto: Sprint 3 — Chatbot de Denúncia de Falsificação
+
+Integrantes: 
+
+Lorena Bauer Nogueira - RM: 555272
+Herbertt Di Franco Marques - RM: 556640
+Paulo Carvalho Ruiz Borba - RM: 554562
+Marcos Paolucci Salamondac - RM: 554941
+Nickolas Alexandre de Oliveira Ferraz - RM: 558458
+
+Descrição do Projeto:
+Este projeto implementa um chatbot para o registro de denúncias de falsificação de produtos da HP (como cartuchos, toners e peças), conforme os requisitos da Sprint 3. O assistente virtual guia o usuário através de um fluxo de conversa estruturado, coletando informações essenciais sobre o produto e a compra, sempre com o consentimento explícito do usuário, em conformidade com a LGPD.
+
+Ao final da coleta de dados, o bot apresenta um resumo para validação. Após a confirmação, ele gera um número de protocolo para a denúncia e armazena todos os dados de forma persistente em uma planilha Google Sheets. A lógica de negócio, incluindo a geração do protocolo e as regras de escalonamento de prioridade, é gerenciada por um webhook desenvolvido em Python (com o framework Flask) e hospedado como um serviço serverless no Google Cloud Run.
+
+ Arquitetura:
+* Plataforma de NLP: Google Dialogflow Essentials (ES)
+* Canal de Atendimento: Dialogflow Messenger (Web Widget)
+* Backend (Webhook): Python com Flask, hospedado no Google Cloud Run.
+* Persistência de Dados: Google Sheets.
+
+Como Executar o Projeto:
+
+Para replicar e executar este projeto, siga os passos abaixo na ordem correta.
+
+### 1. Pré-requisito: Gerar Credenciais no Google Cloud
+Antes de tudo, é necessário criar uma "identidade de robô" (Conta de Serviço) para permitir que o código acesse a planilha.
+1.  No Google Cloud Console, vá para **IAM e Admin > Contas de serviço**.
+2.  Crie uma nova conta de serviço (ex: `webhook-sheets-editor`).
+3.  Conceda a essa conta o papel de **Projeto > Editor**.
+4.  Após criar a conta, entre nela, vá na aba **CHAVES**, clique em **ADICIONAR CHAVE > Criar nova chave**, selecione **JSON** e faça o download. **Guarde este arquivo `credentials.json`**.
+5.  Copie o e-mail desta conta de serviço (ex: `webhook-sheets-editor@seu-projeto.iam.gserviceaccount.com`).
+
+### 2. Configuração da Planilha (Banco de Dados)
+1.  Crie uma nova planilha no Google Sheets e renomeie para "Denuncias_Chatbot".
+2.  Na primeira linha, adicione os seguintes cabeçalhos, na ordem exata:
+    `Timestamp | Protocolo | Prioridade | Produto | Modelo | Serie_Lote | Canal_Venda | Loja | Data_Compra | UF | Municipio | Valor_Pago | Tem_NF | Motivo`
+3.  Clique em Compartilhar e adicione o e-mail da conta de serviço, dando a ele permissão de Editor.
+
+ 3. Configuração do Dialogflow:
+1.  Crie um novo agente no Google Dialogflow ES.
+2.  Vá em Configurações  > Export and Import > Restore from ZIP**.
+3.  Faça o upload do arquivo `[NOME_DO_SEU_ARQUIVO_EXPORTADO].zip` fornecido.
+
+ 4. Configuração do Webhook (Google Cloud Run):
+1.  No Google Cloud Console, vá para o serviço **Cloud Run**.
+2.  Clique em  CRIAR SERVIÇO.
+3.  Selecione "Usar um editor in-line para criar uma função" como a origem.
+4.  Configure o serviço:
+    * **Nome do Serviço:** `webhook-chatbot-denuncia` (ou outro nome de sua preferência).
+    * **Região:** `southamerica-east1 (São Paulo)`.
+    * **Autenticação:** Marque **`Permitir invocações não autenticadas`**.
+5.  Na seção de código:
+    * **Tempo de Execução:** `Python 3.12` (ou superior).
+    * No arquivo **`requirements.txt`**, cole:
+        ```
+        Flask
+        gspread
+        gunicorn
+        ```
+    * No arquivo "main.py", cole o código Python fornecido.
+    IMPORTANTE: Dentro do código `main.py`, substitua o placeholder na variável "google_credentials_str" pelo conteúdo completo do seu arquivo "credentials.json" (do passo 1.4).
+6.  Clique em "Criar" ou "Implantar".
+
+ 5. Conexão Final
+1.  Após a implantação bem-sucedida, copie a **URL** do seu serviço Cloud Run.
+2.  A URL final do webhook deve incluir o caminho da rota. Exemplo: `https://webhook-chatbot-denuncia-....run.app/webhook`.
+3.  Volte ao Dialogflow, vá para a seção Fulfillment.
+4.  Ative o Webhook e cole a URL completa no campo correspondente. Salve.
+
+## Regra de Escalonamento para "Prioridade Alta"
+A denúncia é marcada com prioridade "Alta" se **TODAS** as seguintes condições forem verdadeiras, conforme implementado no webhook:
+1.  O motivo da suspeita descrito pelo usuário contém a palavra "vazamento".
+2.  O usuário informa que **não** possui a Nota Fiscal.
+3.  O nome da loja/vendedor está presente em uma lista de risco pré-definida no código.
+
+
+Resultado da Persistência
+
+Para ver as denúncias sendo registradas em tempo real pelo chatbot, acesse a nossa planilha de resultados através do link abaixo:
+
+https://docs.google.com/spreadsheets/d/1dyUw_3VUXRofC1I8DMY0acCyfsMnsOJKzJ4TMgsFneM/edit?usp=sharing
+
