@@ -74,10 +74,6 @@ A denúncia é marcada com prioridade "Alta" se **TODAS** as seguintes condiçõ
 2.  O usuário informa que **não** possui a Nota Fiscal.
 3.  O nome da loja/vendedor está presente em uma lista de risco pré-definida no código.
 
+link para o widget dialogflow messenger: https://lorenabauer.github.io/chatbot-denuncia-falsificacao/
 
-Resultado da Persistência
-
-Para ver as denúncias sendo registradas em tempo real pelo chatbot, acesse a nossa planilha de resultados através do link abaixo:
-
-https://docs.google.com/spreadsheets/d/1dyUw_3VUXRofC1I8DMY0acCyfsMnsOJKzJ4TMgsFneM/edit?usp=sharing
 
